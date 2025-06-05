@@ -189,8 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         subtitle: Text(
-          '${stay.durationInDays} days' +
-              (stay.notes.isNotEmpty ? ' • ${stay.notes}' : ''),
+          '${stay.durationInDays} days${stay.notes.isNotEmpty ? ' • ${stay.notes}' : ''}',
         ),
         trailing: stay.isOngoing
             ? const Icon(Icons.circle, color: Colors.green)

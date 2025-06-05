@@ -53,6 +53,7 @@ dependencies:
   time_machine: ^0.9.17
   timezone: ^0.10.1
 
+  path: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

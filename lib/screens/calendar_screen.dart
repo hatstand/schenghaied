@@ -6,7 +6,6 @@ import 'package:schengen/screens/add_stay_screen.dart';
 import 'package:schengen/screens/stay_details_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-import 'package:time_machine/time_machine.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});

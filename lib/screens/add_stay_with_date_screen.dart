@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:schengen/screens/add_stay_screen.dart';
-import 'package:time_machine/time_machine.dart';
 
 /// A helper widget that redirects to AddStayScreen with pre-filled date range
 class AddStayWithDateScreen extends StatelessWidget {
