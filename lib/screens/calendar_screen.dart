@@ -17,7 +17,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   late DateTime _selectedDay;
   late CalendarFormat _calendarFormat;
   late Map<DateTime, List<StayRecord>> _events;
-  
+
   @override
   void initState() {
     super.initState();
@@ -25,7 +25,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _selectedDay = DateTime.now();
     _calendarFormat = CalendarFormat.month;
     _events = {};
-    
+
     // Load data when screen initializes if needed
     Future.microtask(() {
       final stayProvider = Provider.of<StayProvider>(context, listen: false);
@@ -34,25 +34,37 @@ class _CalendarScreenState extends State<CalendarScreen> {
       }
     });
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _generateEventsMap();
   }
-  
+
   void _generateEventsMap() {
     final stayProvider = Provider.of<StayProvider>(context, listen: false);
     final Map<DateTime, List<StayRecord>> eventsMap = {};
-    
+
     for (var stay in stayProvider.stays) {
-      DateTime date = DateTime(stay.entryDate.year, stay.entryDate.month, stay.entryDate.day);
-      DateTime endDate = stay.exitDate != null 
-          ? DateTime(stay.exitDate!.year, stay.exitDate!.month, stay.exitDate!.day)
+      DateTime date = DateTime(
+        stay.entryDate.year,
+        stay.entryDate.month,
+        stay.entryDate.day,
+      );
+      DateTime endDate = stay.exitDate != null
+          ? DateTime(
+              stay.exitDate!.year,
+              stay.exitDate!.month,
+              stay.exitDate!.day,
+            )
           : DateTime.now();
-      
+
       // Mark each day of the stay
-      for (var d = date; !d.isAfter(endDate); d = d.add(const Duration(days: 1))) {
+      for (
+        var d = date;
+        !d.isAfter(endDate);
+        d = d.add(const Duration(days: 1))
+      ) {
         final normalizedDate = DateTime(d.year, d.month, d.day);
         if (eventsMap[normalizedDate] == null) {
           eventsMap[normalizedDate] = [];
@@ -60,7 +72,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         eventsMap[normalizedDate]!.add(stay);
       }
     }
-    
+
     setState(() {
       _events = eventsMap;
     });
@@ -70,12 +82,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
     if (stays == null || stays.isEmpty) return Colors.transparent;
     return Colors.green.shade800; // For days in the Schengen zone
   }
-  
+
   List<StayRecord> _getEventsForDay(DateTime day) {
     final normalizedDate = DateTime(day.year, day.month, day.day);
     return _events[normalizedDate] ?? [];
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,13 +101,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
           if (stayProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           return Column(
             children: [
               // Calendar Widget
               TableCalendar(
-                firstDay: DateTime.now().subtract(const Duration(days: 365 * 2)), // 2 years back
-                lastDay: DateTime.now().add(const Duration(days: 365)), // 1 year ahead
+                firstDay: DateTime.now().subtract(
+                  const Duration(days: 365 * 2),
+                ), // 2 years back
+                lastDay: DateTime.now().add(
+                  const Duration(days: 365),
+                ), // 1 year ahead
                 focusedDay: _focusedDay,
                 selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                 calendarFormat: _calendarFormat,
@@ -108,7 +124,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     shape: BoxShape.circle,
                   ),
                   todayDecoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.5),
                     shape: BoxShape.circle,
                   ),
                   selectedDecoration: BoxDecoration(
@@ -125,7 +143,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _getMarkerColor(events as List<StayRecord>?).withOpacity(0.3),
+                            color: _getMarkerColor(
+                              events as List<StayRecord>?,
+                            ).withOpacity(0.3),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -137,7 +157,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 onDaySelected: (selectedDay, focusedDay) {
                   setState(() {
                     _selectedDay = selectedDay;
-                    _focusedDay = focusedDay; // update focused day when selecting a day
+                    _focusedDay =
+                        focusedDay; // update focused day when selecting a day
                   });
                   _showStaysForSelectedDay(selectedDay);
                 },
@@ -152,7 +173,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   });
                 },
               ),
-              
+
               // Legend
               Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -172,7 +193,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ],
                 ),
               ),
-              
+
               // Stats
               Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -189,8 +210,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           stayProvider.daysSpent > 80
                               ? Colors.red
                               : stayProvider.daysSpent > 60
-                                  ? Colors.orange
-                                  : Colors.green,
+                              ? Colors.orange
+                              : Colors.green,
                         ),
                         _buildStatWidget(
                           'Days Remaining',
@@ -198,8 +219,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           stayProvider.daysRemaining < 10
                               ? Colors.red
                               : stayProvider.daysRemaining < 30
-                                  ? Colors.orange
-                                  : Colors.green,
+                              ? Colors.orange
+                              : Colors.green,
                         ),
                       ],
                     ),
@@ -212,7 +233,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
   }
-  
+
   Widget _buildStatWidget(String label, String value, Color color) {
     return Column(
       children: [
@@ -236,12 +257,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ],
     );
   }
-  
+
   void _showStaysForSelectedDay(DateTime selectedDay) {
     final events = _getEventsForDay(selectedDay);
-    
+
     if (events.isEmpty) return;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -257,9 +278,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 '${DateFormat('MMM d').format(stay.entryDate)} - ${stay.exitDate != null ? DateFormat('MMM d').format(stay.exitDate!) : 'Present'}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: Text(
-                stay.notes.isNotEmpty ? stay.notes : 'No notes',
-              ),
+              subtitle: Text(stay.notes.isNotEmpty ? stay.notes : 'No notes'),
               trailing: Text(
                 '${stay.durationInDays} days',
                 style: TextStyle(
@@ -278,7 +297,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 class DrayCurvedBottomSheet extends StatelessWidget {
   final String title;
   final Widget child;
-  
+
   const DrayCurvedBottomSheet({
     super.key,
     required this.title,
@@ -312,10 +331,7 @@ class DrayCurvedBottomSheet extends StatelessWidget {
           // Title
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           // Content
