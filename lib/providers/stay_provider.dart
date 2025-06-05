@@ -1,7 +1,9 @@
+// filepath: /home/john/code/schengen/lib/providers/stay_provider.dart
 import 'package:flutter/foundation.dart';
 import 'package:schengen/models/stay_record.dart';
 import 'package:schengen/models/schengen_calculator.dart';
 import 'package:schengen/services/database_service.dart';
+import 'package:time_machine/time_machine.dart';
 
 class StayProvider with ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService();
@@ -72,7 +74,7 @@ class StayProvider with ChangeNotifier {
   }
 
   // Record exit from Schengen for the current stay
-  Future<void> recordExit(DateTime exitDate) async {
+  Future<void> recordExit(LocalDate exitDate) async {
     if (!isCurrentlyInSchengen) return;
 
     try {
@@ -84,5 +86,10 @@ class StayProvider with ChangeNotifier {
     } catch (e) {
       print('Error recording exit: $e');
     }
+  }
+
+  // Record exit from Schengen using DateTime (for backward compatibility)
+  Future<void> recordExitDateTime(DateTime exitDateTime) async {
+    recordExit(LocalDate.dateTime(exitDateTime));
   }
 }

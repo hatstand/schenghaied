@@ -1,6 +1,8 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:schengen/models/stay_record.dart';
+import 'package:time_machine/time_machine.dart';
+import 'package:time_machine/time_machine_text_patterns.dart';
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -19,15 +21,68 @@ class DatabaseService {
 
   Future<Database> _initDatabase() async {
     String path = join(await getDatabasesPath(), 'schengen_tracker.db');
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
+    return await openDatabase(
+      path,
+      version: 2,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Get all existing records
+      final List<Map<String, dynamic>> records = await db.query('stay_records');
+
+      // Rename the old table
+      await db.execute('ALTER TABLE stay_records RENAME TO stay_records_old');
+
+      // Create the new table with TEXT date columns
+      await db.execute('''
+        CREATE TABLE stay_records(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          entry_date TEXT NOT NULL,
+          exit_date TEXT,
+          notes TEXT
+        )
+      ''');
+
+      // Migrate data with date conversion
+      for (var record in records) {
+        final entryDate = DateTime.fromMillisecondsSinceEpoch(
+          record['entry_date'],
+        );
+        final exitDate = record['exit_date'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(record['exit_date'])
+            : null;
+
+        // Convert to LocalDate and then to ISO string format
+        final localEntryDate = LocalDate.dateTime(entryDate);
+        final localExitDate = exitDate != null
+            ? LocalDate.dateTime(exitDate)
+            : null;
+
+        await db.insert('stay_records', {
+          'id': record['id'],
+          'entry_date': LocalDatePattern.iso.format(localEntryDate),
+          'exit_date': localExitDate != null
+              ? LocalDatePattern.iso.format(localExitDate)
+              : null,
+          'notes': record['notes'],
+        });
+      }
+
+      // Drop the old table
+      await db.execute('DROP TABLE stay_records_old');
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE stay_records(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        entry_date INTEGER NOT NULL,
-        exit_date INTEGER,
+        entry_date TEXT NOT NULL,
+        exit_date TEXT,
         notes TEXT
       )
     ''');
@@ -63,6 +118,8 @@ class DatabaseService {
   // Get all stay records, sorted by entry date (newest first)
   Future<List<StayRecord>> getAllStayRecords() async {
     final db = await database;
+    // Using ORDER BY with the LocalDate string format (YYYY-MM-DD)
+    // This works because ISO date string format sorts correctly
     final List<Map<String, dynamic>> maps = await db.query(
       'stay_records',
       orderBy: 'entry_date DESC',

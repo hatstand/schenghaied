@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:schengen/providers/stay_provider.dart';
 import 'package:schengen/screens/home_screen.dart';
+import 'package:time_machine/time_machine.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Time Machine with rootBundle for Flutter
+  await TimeMachine.initialize({'rootBundle': rootBundle});
+
   runApp(const MyApp());
 }
 

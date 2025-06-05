@@ -6,6 +6,7 @@ import 'package:schengen/screens/add_stay_screen.dart';
 import 'package:schengen/screens/stay_details_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:time_machine/time_machine.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -53,14 +54,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
     for (var stay in stayProvider.stays) {
       DateTime date = DateTime(
         stay.entryDate.year,
-        stay.entryDate.month,
-        stay.entryDate.day,
+        stay.entryDate.monthOfYear,
+        stay.entryDate.dayOfMonth,
       );
       DateTime endDate = stay.exitDate != null
           ? DateTime(
               stay.exitDate!.year,
-              stay.exitDate!.month,
-              stay.exitDate!.day,
+              stay.exitDate!.monthOfYear,
+              stay.exitDate!.dayOfMonth,
             )
           : DateTime.now();
 
@@ -437,7 +438,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             final stay = events[index];
             return ListTile(
               title: Text(
-                '${DateFormat('MMM d').format(stay.entryDate)} - ${stay.exitDate != null ? DateFormat('MMM d').format(stay.exitDate!) : 'Present'}',
+                '${DateFormat('MMM d').format(DateTime(stay.entryDate.year, stay.entryDate.monthOfYear, stay.entryDate.dayOfMonth))} - ${stay.exitDate != null ? DateFormat('MMM d').format(DateTime(stay.exitDate!.year, stay.exitDate!.monthOfYear, stay.exitDate!.dayOfMonth)) : 'Present'}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               subtitle: Text(stay.notes.isNotEmpty ? stay.notes : 'No notes'),

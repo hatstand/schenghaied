@@ -3,10 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:schengen/providers/stay_provider.dart';
 import 'package:schengen/models/stay_record.dart';
 import 'package:intl/intl.dart';
+import 'package:time_machine/time_machine.dart';
 
 class AddStayScreen extends StatefulWidget {
-  final DateTime? initialEntryDate;
-  final DateTime? initialExitDate;
+  final DateTime?
+  initialEntryDate; // Keep these as DateTime for backward compatibility
+  final DateTime? initialExitDate; // We'll convert to LocalDate in the state
 
   const AddStayScreen({super.key, this.initialEntryDate, this.initialExitDate});
 
@@ -16,19 +18,23 @@ class AddStayScreen extends StatefulWidget {
 
 class _AddStayScreenState extends State<AddStayScreen> {
   final _formKey = GlobalKey<FormState>();
-  late DateTime _entryDate;
-  DateTime? _exitDate;
+  late LocalDate _entryDate;
+  LocalDate? _exitDate;
   String _notes = '';
   late bool _isCurrentlyInSchengen;
 
   @override
   void initState() {
     super.initState();
-    // Use initialEntryDate if provided, otherwise use current date
-    _entryDate = widget.initialEntryDate ?? DateTime.now();
+    // Convert DateTime to LocalDate
+    _entryDate = widget.initialEntryDate != null
+        ? LocalDate.dateTime(widget.initialEntryDate!)
+        : LocalDate.today();
 
-    // Use initialExitDate if provided
-    _exitDate = widget.initialExitDate;
+    // Convert DateTime to LocalDate
+    _exitDate = widget.initialExitDate != null
+        ? LocalDate.dateTime(widget.initialExitDate!)
+        : null;
 
     // If exit date is provided, user is not currently in Schengen
     _isCurrentlyInSchengen = widget.initialExitDate == null;
@@ -62,7 +68,15 @@ class _AddStayScreenState extends State<AddStayScreen> {
                     border: OutlineInputBorder(),
                     suffixIcon: Icon(Icons.calendar_today),
                   ),
-                  child: Text(DateFormat('MMMM d, yyyy').format(_entryDate)),
+                  child: Text(
+                    DateFormat('MMMM d, yyyy').format(
+                      DateTime(
+                        _entryDate.year,
+                        _entryDate.monthOfYear,
+                        _entryDate.dayOfMonth,
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -98,7 +112,13 @@ class _AddStayScreenState extends State<AddStayScreen> {
                     ),
                     child: Text(
                       _exitDate != null
-                          ? DateFormat('MMMM d, yyyy').format(_exitDate!)
+                          ? DateFormat('MMMM d, yyyy').format(
+                              DateTime(
+                                _exitDate!.year,
+                                _exitDate!.monthOfYear,
+                                _exitDate!.dayOfMonth,
+                              ),
+                            )
                           : 'Select exit date',
                     ),
                   ),
@@ -134,26 +154,60 @@ class _AddStayScreenState extends State<AddStayScreen> {
   }
 
   Future<void> _selectDate(BuildContext context, bool isEntryDate) async {
-    final initialDate = isEntryDate
-        ? _entryDate
-        : (_exitDate ?? DateTime.now());
+    // Convert LocalDate to DateTime for the DatePicker
+    final initialDateTimeValue = isEntryDate
+        ? DateTime(
+            _entryDate.year,
+            _entryDate.monthOfYear,
+            _entryDate.dayOfMonth,
+          )
+        : _exitDate != null
+        ? DateTime(
+            _exitDate!.year,
+            _exitDate!.monthOfYear,
+            _exitDate!.dayOfMonth,
+          )
+        : DateTime.now();
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: initialDate,
-      firstDate: isEntryDate ? DateTime(2000) : _entryDate,
+      initialDate: initialDateTimeValue,
+      firstDate: isEntryDate
+          ? DateTime(2000)
+          : DateTime(
+              _entryDate.year,
+              _entryDate.monthOfYear,
+              _entryDate.dayOfMonth,
+            ),
       lastDate: DateTime.now().add(const Duration(days: 1)),
     );
 
     if (picked != null) {
       setState(() {
         if (isEntryDate) {
-          _entryDate = picked;
+          // Convert DateTime to LocalDate
+          _entryDate = LocalDate.dateTime(picked);
+
           // Reset exit date if entry date is after the current exit date
-          if (_exitDate != null && _entryDate.isAfter(_exitDate!)) {
-            _exitDate = null;
+          if (_exitDate != null) {
+            final entryDateTime = DateTime(
+              _entryDate.year,
+              _entryDate.monthOfYear,
+              _entryDate.dayOfMonth,
+            );
+            final exitDateTime = DateTime(
+              _exitDate!.year,
+              _exitDate!.monthOfYear,
+              _exitDate!.dayOfMonth,
+            );
+
+            if (entryDateTime.isAfter(exitDateTime)) {
+              _exitDate = null;
+            }
           }
         } else {
-          _exitDate = picked;
+          // Convert DateTime to LocalDate
+          _exitDate = LocalDate.dateTime(picked);
         }
       });
     }
@@ -173,7 +227,7 @@ class _AddStayScreenState extends State<AddStayScreen> {
       }
 
       // Check that exit date is not before entry date (should be enforced by the date picker, but just in case)
-      if (_exitDate != null && _exitDate!.isBefore(_entryDate)) {
+      if (_exitDate != null && _exitDate! < _entryDate) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Exit date cannot be before entry date'),

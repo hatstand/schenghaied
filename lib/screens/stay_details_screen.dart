@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:schengen/models/stay_record.dart';
 import 'package:schengen/providers/stay_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:time_machine/time_machine.dart';
 
 class StayDetailsScreen extends StatefulWidget {
   final StayRecord stay;
@@ -16,8 +17,8 @@ class StayDetailsScreen extends StatefulWidget {
 class _StayDetailsScreenState extends State<StayDetailsScreen> {
   late StayRecord _stay;
   late TextEditingController _notesController;
-  late DateTime _entryDate;
-  late DateTime? _exitDate;
+  late LocalDate _entryDate;
+  late LocalDate? _exitDate;
 
   @override
   void initState() {
@@ -171,7 +172,7 @@ class _StayDetailsScreenState extends State<StayDetailsScreen> {
 
   Widget _buildDateField({
     required String title,
-    required DateTime? date,
+    required LocalDate? date,
     required VoidCallback onTap,
     bool allowNull = false,
   }) {
@@ -206,7 +207,9 @@ class _StayDetailsScreenState extends State<StayDetailsScreen> {
             ),
             child: Text(
               date != null
-                  ? DateFormat('MMMM d, yyyy').format(date)
+                  ? DateFormat('MMMM d, yyyy').format(
+                      DateTime(date.year, date.monthOfYear, date.dayOfMonth),
+                    )
                   : 'Not set',
             ),
           ),
@@ -216,27 +219,52 @@ class _StayDetailsScreenState extends State<StayDetailsScreen> {
   }
 
   Future<void> _selectDate(BuildContext context, bool isEntryDate) async {
-    final initialDate = isEntryDate
-        ? _entryDate
-        : (_exitDate ?? DateTime.now());
+    // Convert LocalDate to DateTime for the date picker
+    final DateTime initialDateTime = isEntryDate
+        ? DateTime(
+            _entryDate.year,
+            _entryDate.monthOfYear,
+            _entryDate.dayOfMonth,
+          )
+        : (_exitDate != null
+              ? DateTime(
+                  _exitDate!.year,
+                  _exitDate!.monthOfYear,
+                  _exitDate!.dayOfMonth,
+                )
+              : DateTime.now());
+
+    // Convert entry date to DateTime for the firstDate parameter
+    final DateTime firstDateParam = isEntryDate
+        ? DateTime(2000)
+        : DateTime(
+            _entryDate.year,
+            _entryDate.monthOfYear,
+            _entryDate.dayOfMonth,
+          );
 
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: initialDate,
-      firstDate: isEntryDate ? DateTime(2000) : _entryDate,
+      initialDate: initialDateTime,
+      firstDate: firstDateParam,
       lastDate: DateTime.now(),
     );
 
     if (picked != null) {
       setState(() {
         if (isEntryDate) {
-          _entryDate = picked;
+          // Convert picked DateTime to LocalDate
+          _entryDate = LocalDate.dateTime(picked);
+
           // Reset exit date if it's before the new entry date
-          if (_exitDate != null && _exitDate!.isBefore(_entryDate)) {
-            _exitDate = null;
+          if (_exitDate != null) {
+            if (_exitDate! < _entryDate) {
+              _exitDate = null;
+            }
           }
         } else {
-          _exitDate = picked;
+          // Convert picked DateTime to LocalDate
+          _exitDate = LocalDate.dateTime(picked);
         }
       });
     }
@@ -244,7 +272,8 @@ class _StayDetailsScreenState extends State<StayDetailsScreen> {
 
   void _saveChanges() {
     // Validate data
-    if (_entryDate.isAfter(DateTime.now())) {
+    LocalDate today = LocalDate.today();
+    if (_entryDate > today) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Entry date cannot be in the future'),
@@ -254,7 +283,7 @@ class _StayDetailsScreenState extends State<StayDetailsScreen> {
       return;
     }
 
-    if (_exitDate != null && _exitDate!.isBefore(_entryDate)) {
+    if (_exitDate != null && _exitDate! < _entryDate) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Exit date cannot be before entry date'),

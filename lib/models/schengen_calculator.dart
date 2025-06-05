@@ -1,4 +1,5 @@
 import 'package:schengen/models/stay_record.dart';
+import 'package:time_machine/time_machine.dart';
 
 class SchengenCalculator {
   // Constants for Schengen rules
@@ -8,35 +9,33 @@ class SchengenCalculator {
   // Calculate days spent in the Schengen zone in the last 180 days from a reference date
   static int calculateDaysSpent(
     List<StayRecord> stays, [
-    DateTime? referenceDate,
+    LocalDate? referenceDate,
   ]) {
-    final date = referenceDate ?? DateTime.now();
-    final lookbackDate = date.subtract(
-      const Duration(days: lookbackPeriodDays),
-    );
+    final date = referenceDate ?? LocalDate.today();
+    // Subtract 180 days from the reference date
+    final lookbackDate = date.addDays(-lookbackPeriodDays);
 
     int daysSpent = 0;
 
     for (var stay in stays) {
       // Skip stays that ended before the lookback period
-      if (stay.exitDate != null && stay.exitDate!.isBefore(lookbackDate)) {
+      if (stay.exitDate != null && stay.exitDate! < lookbackDate) {
         continue;
       }
 
       // Calculate the start date for this stay for our counting
-      DateTime startCountingFrom = stay.entryDate.isAfter(lookbackDate)
+      LocalDate startCountingFrom = stay.entryDate > lookbackDate
           ? stay.entryDate
           : lookbackDate;
 
       // Calculate the end date for this stay for our counting
-      DateTime endCountingAt =
-          stay.exitDate == null || stay.exitDate!.isAfter(date)
+      LocalDate endCountingAt = stay.exitDate == null || stay.exitDate! > date
           ? date
           : stay.exitDate!;
 
       // Add the days from this stay within our period
-      if (!endCountingAt.isBefore(startCountingFrom)) {
-        daysSpent += endCountingAt.difference(startCountingFrom).inDays + 1;
+      if (!(endCountingAt < startCountingFrom)) {
+        daysSpent += endCountingAt.periodSince(startCountingFrom).days + 1;
       }
     }
 
@@ -46,7 +45,7 @@ class SchengenCalculator {
   // Calculate days remaining in the Schengen zone based on past stays
   static int calculateDaysRemaining(
     List<StayRecord> stays, [
-    DateTime? referenceDate,
+    LocalDate? referenceDate,
   ]) {
     int daysSpent = calculateDaysSpent(stays, referenceDate);
     return maxStayDays - daysSpent;

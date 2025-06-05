@@ -6,6 +6,7 @@ import 'package:schengen/screens/calendar_screen.dart';
 import 'package:schengen/screens/stay_details_screen.dart';
 import 'package:schengen/models/stay_record.dart';
 import 'package:intl/intl.dart';
+import 'package:time_machine/time_machine.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -207,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showExitDialog(BuildContext context) {
     final stayProvider = Provider.of<StayProvider>(context, listen: false);
-    DateTime selectedDate = DateTime.now();
+    DateTime selectedDateTime = DateTime.now();
 
     showDialog(
       context: context,
@@ -223,12 +224,12 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () async {
                 final date = await showDatePicker(
                   context: context,
-                  initialDate: selectedDate,
+                  initialDate: selectedDateTime,
                   firstDate: DateTime.now().subtract(const Duration(days: 30)),
                   lastDate: DateTime.now(),
                 );
                 if (date != null) {
-                  selectedDate = date;
+                  selectedDateTime = date;
                 }
               },
               child: InputDecorator(
@@ -236,7 +237,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   border: OutlineInputBorder(),
                   labelText: 'Exit Date',
                 ),
-                child: Text(DateFormat('MMM dd, yyyy').format(selectedDate)),
+                child: Text(
+                  DateFormat('MMM dd, yyyy').format(selectedDateTime),
+                ),
               ),
             ),
           ],
@@ -248,7 +251,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           TextButton(
             onPressed: () {
-              stayProvider.recordExit(selectedDate);
+              // Convert DateTime to LocalDate before passing to recordExit
+              final localDate = LocalDate.dateTime(selectedDateTime);
+              stayProvider.recordExit(localDate);
               Navigator.of(context).pop();
             },
             child: const Text('SAVE'),
