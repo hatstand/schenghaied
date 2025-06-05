@@ -6,8 +6,9 @@ import 'package:intl/intl.dart';
 
 class AddStayScreen extends StatefulWidget {
   final DateTime? initialEntryDate;
+  final DateTime? initialExitDate;
 
-  const AddStayScreen({super.key, this.initialEntryDate});
+  const AddStayScreen({super.key, this.initialEntryDate, this.initialExitDate});
 
   @override
   State<AddStayScreen> createState() => _AddStayScreenState();
@@ -18,13 +19,19 @@ class _AddStayScreenState extends State<AddStayScreen> {
   late DateTime _entryDate;
   DateTime? _exitDate;
   String _notes = '';
-  bool _isCurrentlyInSchengen = true;
+  late bool _isCurrentlyInSchengen;
 
   @override
   void initState() {
     super.initState();
     // Use initialEntryDate if provided, otherwise use current date
     _entryDate = widget.initialEntryDate ?? DateTime.now();
+
+    // Use initialExitDate if provided
+    _exitDate = widget.initialExitDate;
+
+    // If exit date is provided, user is not currently in Schengen
+    _isCurrentlyInSchengen = widget.initialExitDate == null;
   }
 
   @override

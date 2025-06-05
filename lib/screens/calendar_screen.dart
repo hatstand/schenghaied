@@ -17,6 +17,9 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   late DateTime _focusedDay;
   late DateTime _selectedDay;
+  DateTime? _rangeStart;
+  DateTime? _rangeEnd;
+  bool _isRangeSelectionMode = false;
   late CalendarFormat _calendarFormat;
   late Map<DateTime, List<StayRecord>> _events;
 
@@ -94,9 +97,43 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Schengen Calendar'),
+        title: Text(
+          _isRangeSelectionMode ? 'Select Date Range' : 'Schengen Calendar',
+        ),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        actions: [
+          IconButton(
+            icon: Icon(
+              _isRangeSelectionMode ? Icons.calendar_today : Icons.date_range,
+            ),
+            tooltip: _isRangeSelectionMode
+                ? 'Switch to single date mode'
+                : 'Switch to date range mode',
+            onPressed: () {
+              setState(() {
+                _isRangeSelectionMode = !_isRangeSelectionMode;
+                // Reset range selection when toggling modes
+                if (!_isRangeSelectionMode) {
+                  _rangeStart = null;
+                  _rangeEnd = null;
+                }
+              });
+
+              // Show instructions when entering range selection mode
+              if (_isRangeSelectionMode) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Select first day (entry date) then last day (exit date) of your stay',
+                    ),
+                    duration: Duration(seconds: 5),
+                  ),
+                );
+              }
+            },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _addNewStay(),
@@ -120,6 +157,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ), // 1 year ahead
                 focusedDay: _focusedDay,
                 selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                rangeStartDay: _rangeStart,
+                rangeEndDay: _rangeEnd,
+                rangeSelectionMode: _isRangeSelectionMode
+                    ? RangeSelectionMode.enforced
+                    : RangeSelectionMode.disabled,
                 calendarFormat: _calendarFormat,
                 eventLoader: _getEventsForDay,
                 startingDayOfWeek: StartingDayOfWeek.monday,
@@ -136,6 +178,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     shape: BoxShape.circle,
                   ),
                   selectedDecoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  rangeHighlightColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withOpacity(0.2),
+                  rangeStartDecoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  rangeEndDecoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
                   ),
@@ -161,12 +214,44 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   },
                 ),
                 onDaySelected: (selectedDay, focusedDay) {
+                  if (_isRangeSelectionMode) {
+                    setState(() {
+                      if (_rangeStart == null ||
+                          (_rangeStart != null && _rangeEnd != null)) {
+                        _rangeStart = selectedDay;
+                        _rangeEnd = null;
+                      } else if (_rangeStart!.isBefore(selectedDay)) {
+                        _rangeEnd = selectedDay;
+                        // Once range is complete, add a stay
+                        _addStayWithDateRange();
+                      } else {
+                        // If the selected end date is before the start date, swap them
+                        _rangeEnd = _rangeStart;
+                        _rangeStart = selectedDay;
+                        // Once range is complete, add a stay
+                        _addStayWithDateRange();
+                      }
+                      _selectedDay = selectedDay;
+                      _focusedDay = focusedDay;
+                    });
+                  } else {
+                    setState(() {
+                      _selectedDay = selectedDay;
+                      _focusedDay = focusedDay;
+                    });
+                    _showStaysForSelectedDay(selectedDay);
+                  }
+                },
+                onRangeSelected: (start, end, focusedDay) {
                   setState(() {
-                    _selectedDay = selectedDay;
-                    _focusedDay =
-                        focusedDay; // update focused day when selecting a day
+                    _rangeStart = start;
+                    _rangeEnd = end;
+                    _focusedDay = focusedDay;
                   });
-                  _showStaysForSelectedDay(selectedDay);
+
+                  if (start != null && end != null) {
+                    _addStayWithDateRange();
+                  }
                 },
                 onFormatChanged: (format) {
                   setState(() {
@@ -211,34 +296,61 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
               ),
 
-              // Usage hint
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Tap on any date to view, edit, or add stays',
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.7),
+              // Range selection legend or usage hint
+              if (_isRangeSelectionMode)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Card(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'First tap selects entry date, second tap selects exit date',
+                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else
+                // Usage hint (shown in normal mode)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Tap on any date to view, edit, or add stays',
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
               // Stats
               Padding(
@@ -399,7 +511,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           'No stays on ${DateFormat('MMM d, yyyy').format(selectedDay)}',
         ),
         content: const Text(
-          'Would you like to add a new stay starting on this date?',
+          'Would you like to add a new stay on this date? You can specify just the entry date or a complete date range.',
         ),
         actions: [
           TextButton(
@@ -411,21 +523,31 @@ class _CalendarScreenState extends State<CalendarScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _addStayOnDate(selectedDay);
+              _addStayOnDate(selectedDay, null); // Only entry date
             },
-            child: const Text('ADD STAY'),
+            child: const Text('ENTRY ONLY'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _promptForDateRange(selectedDay);
+            },
+            child: const Text('DATE RANGE'),
           ),
         ],
       ),
     );
   }
 
-  /// Navigate to the AddStayScreen with the selected date pre-filled
-  Future<void> _addStayOnDate(DateTime startDate) async {
-    // Use our AddStayScreen with initialEntryDate
+  /// Navigate to the AddStayScreen with the selected date(s) pre-filled
+  Future<void> _addStayOnDate(DateTime startDate, DateTime? endDate) async {
+    // Use our AddStayScreen with initialEntryDate and optional initialExitDate
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => AddStayScreen(initialEntryDate: startDate),
+        builder: (context) => AddStayScreen(
+          initialEntryDate: startDate,
+          initialExitDate: endDate,
+        ),
       ),
     );
 
@@ -434,6 +556,119 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _generateEventsMap();
       });
     }
+  }
+
+  /// Show a dialog to select an exit date for the stay
+  Future<void> _promptForDateRange(DateTime entryDate) async {
+    DateTime? exitDate;
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Select Exit Date'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Entry date: ${DateFormat('MMM d, yyyy').format(entryDate)}',
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate:
+                          exitDate ?? entryDate.add(const Duration(days: 1)),
+                      firstDate: entryDate.add(const Duration(days: 1)),
+                      lastDate: DateTime.now(),
+                    );
+
+                    if (picked != null) {
+                      setState(() {
+                        exitDate = picked;
+                      });
+                    }
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Exit Date',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    child: Text(
+                      exitDate != null
+                          ? DateFormat('MMM d, yyyy').format(exitDate!)
+                          : 'Select exit date',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('CANCEL'),
+              ),
+              TextButton(
+                onPressed: exitDate == null
+                    ? null
+                    : () {
+                        Navigator.of(context).pop();
+                        _addStayOnDate(entryDate, exitDate);
+                      },
+                child: const Text('CONTINUE'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Add a new stay with the selected date range
+  void _addStayWithDateRange() {
+    // Make sure we have both a start and end date selected
+    if (_rangeStart == null || _rangeEnd == null) {
+      return;
+    }
+
+    // Don't allow creating stays that end in the future
+    if (_rangeEnd!.isAfter(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot create stays that end in the future'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Navigate to AddStayScreen with the selected date range
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (context) => AddStayScreen(
+              initialEntryDate: _rangeStart!,
+              initialExitDate: _rangeEnd!,
+            ),
+          ),
+        )
+        .then((result) {
+          if (result != null) {
+            // Successfully added the stay, refresh events
+            setState(() {
+              _generateEventsMap();
+              // Reset range selection mode
+              _isRangeSelectionMode = false;
+              _rangeStart = null;
+              _rangeEnd = null;
+            });
+          }
+        });
   }
 }
 
