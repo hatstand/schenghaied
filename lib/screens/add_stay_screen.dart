@@ -5,7 +5,9 @@ import 'package:schengen/models/stay_record.dart';
 import 'package:intl/intl.dart';
 
 class AddStayScreen extends StatefulWidget {
-  const AddStayScreen({super.key});
+  final DateTime? initialEntryDate;
+
+  const AddStayScreen({super.key, this.initialEntryDate});
 
   @override
   State<AddStayScreen> createState() => _AddStayScreenState();
@@ -13,10 +15,17 @@ class AddStayScreen extends StatefulWidget {
 
 class _AddStayScreenState extends State<AddStayScreen> {
   final _formKey = GlobalKey<FormState>();
-  DateTime _entryDate = DateTime.now();
+  late DateTime _entryDate;
   DateTime? _exitDate;
   String _notes = '';
   bool _isCurrentlyInSchengen = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Use initialEntryDate if provided, otherwise use current date
+    _entryDate = widget.initialEntryDate ?? DateTime.now();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +192,7 @@ class _AddStayScreenState extends State<AddStayScreen> {
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pop(context);
+      Navigator.pop(context, true); // Return true to indicate success
     }
   }
 }

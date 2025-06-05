@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:schengen/models/stay_record.dart';
 import 'package:schengen/providers/stay_provider.dart';
+import 'package:schengen/screens/add_stay_screen.dart';
+import 'package:schengen/screens/stay_details_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 
@@ -95,6 +97,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
         title: const Text('Schengen Calendar'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _addNewStay(),
+        child: const Icon(Icons.add),
       ),
       body: Consumer<StayProvider>(
         builder: (context, stayProvider, child) {
@@ -190,7 +196,47 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                     const SizedBox(width: 8),
                     const Text('In Schengen Zone'),
+                    const SizedBox(width: 24),
+                    Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Selected Day'),
                   ],
+                ),
+              ),
+
+              // Usage hint
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Tap on any date to view, edit, or add stays',
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.7),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
 
@@ -261,7 +307,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void _showStaysForSelectedDay(DateTime selectedDay) {
     final events = _getEventsForDay(selectedDay);
 
-    if (events.isEmpty) return;
+    if (events.isEmpty) {
+      // If no stays for this day, offer to add a new stay starting on this date
+      _showAddStayOption(selectedDay);
+      return;
+    }
 
     showModalBottomSheet(
       context: context,
@@ -279,18 +329,111 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               subtitle: Text(stay.notes.isNotEmpty ? stay.notes : 'No notes'),
-              trailing: Text(
-                '${stay.durationInDays} days',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.secondary,
-                  fontWeight: FontWeight.bold,
-                ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${stay.durationInDays} days',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.secondary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 20),
+                    onPressed: () => _editStay(stay),
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ],
               ),
+              onTap: () => _editStay(stay),
             );
           },
         ),
       ),
     );
+  }
+
+  /// Open the edit screen for a stay record
+  Future<void> _editStay(StayRecord stay) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => StayDetailsScreen(stay: stay)),
+    );
+
+    // If we returned from edit screen, refresh the events map
+    // to reflect any changes in the stay records
+    if (result != null) {
+      setState(() {
+        _generateEventsMap();
+      });
+    }
+  }
+
+  /// Open screen to add a new stay
+  Future<void> _addNewStay() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddStayScreen()),
+    );
+
+    // If we returned from add screen, refresh the events map
+    if (result != null) {
+      setState(() {
+        _generateEventsMap();
+      });
+    }
+  }
+
+  /// Show a dialog offering to add a new stay starting on the selected date
+  void _showAddStayOption(DateTime selectedDay) {
+    // Don't offer to add stays in the future
+    if (selectedDay.isAfter(DateTime.now())) {
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'No stays on ${DateFormat('MMM d, yyyy').format(selectedDay)}',
+        ),
+        content: const Text(
+          'Would you like to add a new stay starting on this date?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _addStayOnDate(selectedDay);
+            },
+            child: const Text('ADD STAY'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Navigate to the AddStayScreen with the selected date pre-filled
+  Future<void> _addStayOnDate(DateTime startDate) async {
+    // Use our AddStayScreen with initialEntryDate
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => AddStayScreen(initialEntryDate: startDate),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _generateEventsMap();
+      });
+    }
   }
 }
 

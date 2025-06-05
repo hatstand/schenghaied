@@ -281,7 +281,7 @@ class _StayDetailsScreenState extends State<StayDetailsScreen> {
         backgroundColor: Colors.green,
       ),
     );
-    Navigator.pop(context);
+    Navigator.pop(context, true); // Return true to indicate successful update
   }
 
   void _confirmDelete(BuildContext context) {
@@ -305,7 +305,11 @@ class _StayDetailsScreenState extends State<StayDetailsScreen> {
                 listen: false,
               ).deleteStay(_stay.id!);
               Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Go back to previous screen
+
+              // Return true and show confirmation message
+              Navigator.of(
+                context,
+              ).pop(true); // Go back to previous screen with result
 
               // Show confirmation message
               ScaffoldMessenger.of(context).showSnackBar(
