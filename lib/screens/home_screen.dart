@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:schengen/providers/stay_provider.dart';
 import 'package:schengen/screens/add_stay_screen.dart';
+import 'package:schengen/screens/calendar_screen.dart';
 import 'package:schengen/screens/stay_details_screen.dart';
 import 'package:schengen/models/stay_record.dart';
 import 'package:intl/intl.dart';
@@ -30,6 +31,18 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Schengen Tracker'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month),
+            tooltip: 'Calendar View',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CalendarScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<StayProvider>(
         builder: (context, stayProvider, child) {
