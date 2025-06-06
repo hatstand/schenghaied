@@ -7,7 +7,7 @@ void main() {
   group('SchengenCalculator Tests', () {
     // Setup test data
     final today = LocalDate(2025, 6, 6); // Use a fixed date for testing
-    
+
     final stayRecords = [
       StayRecord(
         id: 1,
@@ -28,11 +28,11 @@ void main() {
         notes: 'Current stay',
       ),
     ];
-    
+
     test('isCurrentlyInSchengen returns true when having ongoing stay', () {
       expect(SchengenCalculator.isCurrentlyInSchengen(stayRecords), true);
     });
-    
+
     test('isCurrentlyInSchengen returns false with no ongoing stay', () {
       final completedStays = [
         StayRecord(
@@ -46,25 +46,31 @@ void main() {
           exitDate: LocalDate(2025, 3, 25),
         ),
       ];
-      
+
       expect(SchengenCalculator.isCurrentlyInSchengen(completedStays), false);
     });
-    
+
     test('calculateDaysSpent returns correct total for the reference date', () {
       // January 1-15 = 15 days (inclusive)
       // March 10-25 = 16 days (inclusive)
       // May 20-June 6 = 18 days (inclusive)
       // Total: 15 + 16 + 18 = 49 days
-      final daysSpent = SchengenCalculator.calculateDaysSpent(stayRecords, today);
+      final daysSpent = SchengenCalculator.calculateDaysSpent(
+        stayRecords,
+        today,
+      );
       expect(daysSpent, 49);
     });
-    
+
     test('calculateDaysRemaining returns correct days left', () {
       // 90 - 49 = 41 days remaining
-      final daysRemaining = SchengenCalculator.calculateDaysRemaining(stayRecords, today);
+      final daysRemaining = SchengenCalculator.calculateDaysRemaining(
+        stayRecords,
+        today,
+      );
       expect(daysRemaining, 41);
     });
-    
+
     test('getMostRecentStay returns the latest stay', () {
       final latestStay = SchengenCalculator.getMostRecentStay(stayRecords);
       expect(latestStay?.id, 3);

@@ -45,7 +45,9 @@ class StayProvider with ChangeNotifier {
       _stays.sort(
         (a, b) => b.entryDate.compareTo(a.entryDate),
       ); // Sort by newest first
-      _logger.info('Added new stay record: ${stay.entryDate} to ${stay.exitDate ?? "present"}');
+      _logger.info(
+        'Added new stay record: ${stay.entryDate} to ${stay.exitDate ?? "present"}',
+      );
       notifyListeners();
     } catch (e, stackTrace) {
       _logger.severe('Error adding stay', e, stackTrace);
@@ -60,10 +62,14 @@ class StayProvider with ChangeNotifier {
       if (index != -1) {
         _stays[index] = stay;
         _stays.sort((a, b) => b.entryDate.compareTo(a.entryDate)); // Re-sort
-        _logger.info('Updated stay record id=${stay.id}: ${stay.entryDate} to ${stay.exitDate ?? "present"}');
+        _logger.info(
+          'Updated stay record id=${stay.id}: ${stay.entryDate} to ${stay.exitDate ?? "present"}',
+        );
         notifyListeners();
       } else {
-        _logger.warning('Tried to update stay with id=${stay.id} but not found in current stays');
+        _logger.warning(
+          'Tried to update stay with id=${stay.id} but not found in current stays',
+        );
       }
     } catch (e, stackTrace) {
       _logger.severe('Error updating stay', e, stackTrace);
@@ -93,7 +99,9 @@ class StayProvider with ChangeNotifier {
         _logger.info('Recording exit from Schengen on $exitDate');
         await updateStay(updatedStay);
       } else {
-        _logger.warning('Attempted to record exit but no ongoing stay was found');
+        _logger.warning(
+          'Attempted to record exit but no ongoing stay was found',
+        );
       }
     } catch (e, stackTrace) {
       _logger.severe('Error recording exit on $exitDate', e, stackTrace);

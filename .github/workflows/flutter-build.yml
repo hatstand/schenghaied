@@ -29,7 +29,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-
+          flutter-version: 'stable'
           channel: 'stable'
           cache: true
       
@@ -69,10 +69,19 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       
+      # Check for keystore secret
+      - name: Check for keystore secret
+        id: check_keystore
+        run: |
+          if [[ -n "${{ secrets.KEYSTORE_FILE_BASE64 }}" ]]; then
+            echo "has_keystore=true" >> $GITHUB_OUTPUT
+          fi
+
       # Decode Android keystore if available
       - name: Decode Android keystore
-        if: ${{ secrets.KEYSTORE_FILE_BASE64 != '' }}
+        if: steps.check_keystore.outputs.has_keystore == 'true'
         run: |
+          mkdir -p android/app/keystore
           echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > android/app/keystore/release.jks
           echo "KEYSTORE_FILE=android/app/keystore/release.jks" >> $GITHUB_ENV
           echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
@@ -84,7 +93,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-
+          flutter-version: 'stable'
           channel: 'stable'
           cache: true
       
@@ -146,7 +155,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-
+          flutter-version: 'stable'
           channel: 'stable'
           cache: true
       

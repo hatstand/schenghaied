@@ -16,34 +16,34 @@ void main() {
     test('StayRecord initialization', () {
       final entryDate = LocalDate(2025, 6, 1);
       final exitDate = LocalDate(2025, 6, 5);
-      
+
       final record = StayRecord(
         id: 1,
         entryDate: entryDate,
         exitDate: exitDate,
         notes: 'Test stay',
       );
-      
+
       expect(record.id, 1);
       expect(record.entryDate, entryDate);
       expect(record.exitDate, exitDate);
       expect(record.notes, 'Test stay');
-      expect(record.durationInDays, 5); // 5 days including both entry and exit dates
+      expect(
+        record.durationInDays,
+        5,
+      ); // 5 days including both entry and exit dates
     });
-    
+
     test('StayRecord with no exit date', () {
       final entryDate = LocalDate(2025, 6, 1);
-      
-      final record = StayRecord(
-        entryDate: entryDate,
-        notes: 'Ongoing stay',
-      );
-      
+
+      final record = StayRecord(entryDate: entryDate, notes: 'Ongoing stay');
+
       expect(record.isOngoing, true);
       expect(record.formattedExitDate, 'Present');
     });
   });
-  
+
   // Skip widget test for now as it needs more setup for TimeMachine
   testWidgets('Skip widget test for CI', (WidgetTester tester) async {
     // This is a placeholder to make CI pass

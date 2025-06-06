@@ -35,7 +35,9 @@ class DatabaseService {
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     _logger.info('Upgrading database from v$oldVersion to v$newVersion');
     if (oldVersion < 2) {
-      _logger.info('Migrating date format from epoch seconds to ISO string format');
+      _logger.info(
+        'Migrating date format from epoch seconds to ISO string format',
+      );
       // Get all existing records
       final List<Map<String, dynamic>> records = await db.query('stay_records');
       _logger.info('Found ${records.length} records to migrate');
@@ -107,7 +109,9 @@ class DatabaseService {
         stayRecord.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      _logger.info('Inserted stay record with id=$id: ${stayRecord.entryDate} to ${stayRecord.exitDate ?? "present"}');
+      _logger.info(
+        'Inserted stay record with id=$id: ${stayRecord.entryDate} to ${stayRecord.exitDate ?? "present"}',
+      );
       return id;
     } catch (e, stackTrace) {
       _logger.severe('Failed to insert stay record', e, stackTrace);
@@ -125,10 +129,16 @@ class DatabaseService {
         where: 'id = ?',
         whereArgs: [stayRecord.id],
       );
-      _logger.info('Updated stay record with id=${stayRecord.id}, rows affected: $rowsAffected');
+      _logger.info(
+        'Updated stay record with id=${stayRecord.id}, rows affected: $rowsAffected',
+      );
       return rowsAffected;
     } catch (e, stackTrace) {
-      _logger.severe('Failed to update stay record with id=${stayRecord.id}', e, stackTrace);
+      _logger.severe(
+        'Failed to update stay record with id=${stayRecord.id}',
+        e,
+        stackTrace,
+      );
       rethrow;
     }
   }
@@ -138,11 +148,13 @@ class DatabaseService {
     final db = await database;
     try {
       final rowsAffected = await db.delete(
-        'stay_records', 
-        where: 'id = ?', 
-        whereArgs: [id]
+        'stay_records',
+        where: 'id = ?',
+        whereArgs: [id],
       );
-      _logger.info('Deleted stay record with id=$id, rows affected: $rowsAffected');
+      _logger.info(
+        'Deleted stay record with id=$id, rows affected: $rowsAffected',
+      );
       return rowsAffected;
     } catch (e, stackTrace) {
       _logger.severe('Failed to delete stay record with id=$id', e, stackTrace);
@@ -162,7 +174,7 @@ class DatabaseService {
       );
 
       _logger.info('Retrieved ${maps.length} stay records from database');
-      
+
       return List.generate(maps.length, (i) {
         return StayRecord.fromMap(maps[i]);
       });
