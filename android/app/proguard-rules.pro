@@ -15,3 +15,10 @@
 
 # Don't obfuscate model classes
 -keep class com.schengentrackerapp.schengen.models.** { *; }
+
+# Keep Play Core classes
+-keep class com.google.android.play.core.splitcompat.** { *; }
+-keep class com.google.android.play.core.splitinstall.** { *; }
+-keep class com.google.android.play.core.tasks.** { *; }
+-keep class io.flutter.embedding.android.FlutterPlayStoreSplitApplication { *; }
+-keep class io.flutter.embedding.engine.deferredcomponents.** { *; }

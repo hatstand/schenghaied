@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -42,8 +45,8 @@ android {
                 // For local development, you can set up a local.properties with these values
                 val properties = project.rootProject.file("local.properties")
                 if (properties.exists()) {
-                    val props = java.util.Properties()
-                    props.load(java.io.FileInputStream(properties))
+                    val props = Properties()
+                    props.load(FileInputStream(properties))
                     val keystoreFile = props.getProperty("keystore.file")
                     if (keystoreFile != null) {
                         storeFile = file(keystoreFile)
@@ -84,4 +87,9 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Add the Play Core library for dynamic feature modules and split install
+    implementation("com.google.android.play:core:1.10.3")
 }
