@@ -1,0 +1,112 @@
+name: Manual Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type to run'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+          - test_only
+      platform:
+        description: 'Platform to build for'
+        required: true
+        default: 'android'
+        type: choice
+        options:
+          - android
+          - ios
+          - both
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+          
+      - name: Install Dependencies
+        run: flutter pub get
+        
+      - name: Run Tests
+        run: flutter test
+  
+  build_android:
+    name: Build Android
+    if: ${{ github.event.inputs.build_type != 'test_only' && (github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both') }}
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+          
+      - name: Install Dependencies
+        run: flutter pub get
+        
+      - name: Build APK
+        run: |
+          if [ "${{ github.event.inputs.build_type }}" == "release" ]; then
+            flutter build apk --release
+          else
+            flutter build apk --debug
+          fi
+          
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-${{ github.event.inputs.build_type }}-build
+          path: build/app/outputs/flutter-apk/
+          retention-days: 7
+          
+  build_ios:
+    name: Build iOS
+    if: ${{ github.event.inputs.build_type != 'test_only' && (github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both') }}
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+          
+      - name: Install Dependencies
+        run: flutter pub get
+        
+      - name: Build iOS
+        run: |
+          if [ "${{ github.event.inputs.build_type }}" == "release" ]; then
+            flutter build ios --release --no-codesign
+          else
+            flutter build ios --debug --no-codesign
+          fi
+          
+      - name: Upload iOS Build
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-${{ github.event.inputs.build_type }}-build
+          path: build/ios/
+          retention-days: 7

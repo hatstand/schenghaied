@@ -30,11 +30,54 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            if (System.getenv("CI") == "true") {
+                // For CI builds, use environment variables
+                storeFile = System.getenv("KEYSTORE_FILE")?.let { file(it) }
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            } else {
+                // For local development, you can set up a local.properties with these values
+                val properties = project.rootProject.file("local.properties")
+                if (properties.exists()) {
+                    val props = java.util.Properties()
+                    props.load(java.io.FileInputStream(properties))
+                    val keystoreFile = props.getProperty("keystore.file")
+                    if (keystoreFile != null) {
+                        storeFile = file(keystoreFile)
+                        storePassword = props.getProperty("keystore.password")
+                        keyAlias = props.getProperty("key.alias")
+                        keyPassword = props.getProperty("key.password")
+                    } else {
+                        println("No signing config found in local.properties")
+                    }
+                } else {
+                    println("No local.properties file found")
+                }
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            
+            // Use release signing config if available, otherwise fall back to debug
+            if ((signingConfigs.findByName("release") as com.android.build.gradle.internal.dsl.SigningConfig?)?.storeFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+                println("Using release signing config")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+                println("Using debug signing config")
+            }
+        }
+        
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
         }
     }
 }

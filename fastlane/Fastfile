@@ -1,0 +1,43 @@
+default_platform(:android)
+
+platform :android do
+  desc "Run tests"
+  lane :test do
+    sh("cd .. && flutter test")
+  end
+
+  desc "Build and sign Android APK"
+  lane :build do
+    sh("cd .. && flutter build apk --release")
+  end
+
+  desc "Deploy a new version to Google Play"
+  lane :deploy do
+    # This would integrate with Google Play
+    # Requires setting up service account credentials
+    # upload_to_play_store(
+    #   track: 'internal',
+    #   apk: '../build/app/outputs/flutter-apk/app-release.apk'
+    # )
+  end
+end
+
+platform :ios do
+  desc "Run tests"
+  lane :test do
+    sh("cd .. && flutter test")
+  end
+
+  desc "Build iOS app"
+  lane :build do
+    sh("cd .. && flutter build ios --release --no-codesign")
+  end
+
+  desc "Build and deploy to TestFlight"
+  lane :beta do
+    # This would integrate with TestFlight
+    # Requires setting up Apple certificates and profiles
+    # build_ios_app(workspace: "ios/Runner.xcworkspace", scheme: "Runner")
+    # upload_to_testflight
+  end
+end

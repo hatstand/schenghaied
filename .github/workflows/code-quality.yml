@@ -1,0 +1,60 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+      
+      - name: Install Dependencies
+        run: flutter pub get
+      
+      - name: Verify Formatting
+        run: dart format --output=none --set-exit-if-changed .
+        
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+        
+      - name: Check for TODOs
+        run: |
+          # Exclude TODO.md from the search
+          TODO_COUNT=$(grep -r "TODO" --include="*.dart" lib/ | wc -l)
+          echo "Found $TODO_COUNT TODOs in Dart files"
+          # Report but don't fail the build
+          
+  metrics:
+    name: Code Metrics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+          
+      - name: Install Dependencies
+        run: |
+          flutter pub get
+          flutter pub global activate dart_code_metrics
+          
+      - name: Run Code Metrics
+        run: |
+          export PATH="$PATH":"$HOME/.pub-cache/bin"
+          metrics analyze lib
