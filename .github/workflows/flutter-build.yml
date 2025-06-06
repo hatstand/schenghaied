@@ -119,7 +119,7 @@ jobs:
 
       # Upload APK as artifact
       - name: Upload Release APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
@@ -127,7 +127,7 @@ jobs:
           
       # Upload App Bundle as artifact
       - name: Upload App Bundle
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-bundle
           path: build/app/outputs/bundle/release/app-release.aab
@@ -170,7 +170,7 @@ jobs:
           
       # Archive as artifact (Since we can't fully build IPA without proper signing)
       - name: Upload iOS Build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ios-build
           path: build/ios/iphoneos
