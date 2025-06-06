@@ -7,6 +7,7 @@ import 'package:schengen/screens/stay_details_screen.dart';
 import 'package:schengen/models/stay_record.dart';
 import 'package:intl/intl.dart';
 import 'package:time_machine/time_machine.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,7 +30,21 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Schengen Tracker'),
+        title: Row(
+          children: [
+            SvgPicture.asset(
+              'assets/images/european-flag-svgrepo-com.svg',
+              height: 24,
+              width: 24,
+              colorFilter: ColorFilter.mode(
+                Theme.of(context).colorScheme.onPrimary,
+                BlendMode.srcIn,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Schengen Tracker'),
+          ],
+        ),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
         actions: [
