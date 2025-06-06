@@ -8,7 +8,7 @@ import 'package:time_machine/time_machine.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize logger
   AppLogger.init();
   final logger = AppLogger.getLogger('Main');
