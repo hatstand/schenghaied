@@ -75,5 +75,39 @@ void main() {
       final latestStay = SchengenCalculator.getMostRecentStay(stayRecords);
       expect(latestStay?.id, 3);
     });
+
+    test('calculateDaysUntilMustLeave returns correct countdown days', () {
+      // Current stay is 18 days, plus previous stays of 31 days = 49 days total
+      // We are allowed 90 days, so initially we have 41 days remaining
+
+      // For this simple test case, no days are "rolling off" within those 41 days,
+      // so the countdown should be 41 days
+      final daysUntilMustLeave = SchengenCalculator.calculateDaysUntilMustLeave(
+        stayRecords,
+        today,
+      );
+      expect(daysUntilMustLeave, 41);
+    });
+
+    test('calculateDaysUntilMustLeave returns -1 when not in Schengen', () {
+      final completedStays = [
+        StayRecord(
+          id: 1,
+          entryDate: LocalDate(2025, 1, 1),
+          exitDate: LocalDate(2025, 1, 15),
+        ),
+        StayRecord(
+          id: 2,
+          entryDate: LocalDate(2025, 3, 10),
+          exitDate: LocalDate(2025, 3, 25),
+        ),
+      ];
+
+      final daysUntilMustLeave = SchengenCalculator.calculateDaysUntilMustLeave(
+        completedStays,
+        today,
+      );
+      expect(daysUntilMustLeave, -1);
+    });
   });
 }

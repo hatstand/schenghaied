@@ -112,6 +112,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? Colors.orange
                               : Colors.green,
                         ),
+
+                        // Only show countdown if user is currently in Schengen
+                        if (stayProvider.isCurrentlyInSchengen)
+                          Column(
+                            children: [
+                              const SizedBox(height: 16),
+                              const Divider(),
+                              const SizedBox(height: 8),
+                              _buildCountdown(stayProvider.daysUntilMustLeave),
+                            ],
+                          ),
                       ],
                     ),
                   ),
@@ -169,6 +180,68 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildCountdown(int daysUntilMustLeave) {
+    String message;
+    Color color;
+    IconData icon;
+
+    if (daysUntilMustLeave <= 0) {
+      message = 'You must leave now!';
+      color = Colors.red;
+      icon = Icons.warning_amber_rounded;
+    } else if (daysUntilMustLeave <= 7) {
+      message = 'You must leave in $daysUntilMustLeave days';
+      color = Colors.red;
+      icon = Icons.warning_rounded;
+    } else if (daysUntilMustLeave <= 14) {
+      message = 'You must leave in $daysUntilMustLeave days';
+      color = Colors.orange;
+      icon = Icons.access_time;
+    } else {
+      message = 'You can stay for $daysUntilMustLeave more days';
+      color = Colors.green;
+      icon = Icons.check_circle;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Countdown',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: color.withOpacity(0.8),
+                  ),
+                ),
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
