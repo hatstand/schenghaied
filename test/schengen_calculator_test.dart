@@ -30,7 +30,7 @@ void main() {
     ];
 
     test('isCurrentlyInSchengen returns true when having ongoing stay', () {
-      expect(SchengenCalculator.isCurrentlyInSchengen(stayRecords), true);
+      expect(SchengenCalculator.isCurrentlyInSchengen(stayRecords), isTrue);
     });
 
     test('isCurrentlyInSchengen returns false with no ongoing stay', () {
@@ -47,7 +47,7 @@ void main() {
         ),
       ];
 
-      expect(SchengenCalculator.isCurrentlyInSchengen(completedStays), false);
+      expect(SchengenCalculator.isCurrentlyInSchengen(completedStays), isFalse);
     });
 
     test('calculateDaysSpent returns correct total for the reference date', () {
@@ -76,20 +76,25 @@ void main() {
       expect(latestStay?.id, 3);
     });
 
+    test('simple calculateDaysUntilMustLeave with one ongoing visit', () {
+      final daysRemaining = SchengenCalculator.calculateDaysUntilMustLeave([
+        StayRecord(entryDate: today, exitDate: null),
+      ], today);
+      expect(daysRemaining, 89);
+    });
+
     test('calculateDaysUntilMustLeave returns correct countdown days', () {
       // Current stay is 18 days, plus previous stays of 31 days = 49 days total
       // We are allowed 90 days, so initially we have 41 days remaining
-
-      // For this simple test case, no days are "rolling off" within those 41 days,
-      // so the countdown should be 41 days
+      // The first day rolls off during the current stay, adding back 15 days.
       final daysUntilMustLeave = SchengenCalculator.calculateDaysUntilMustLeave(
         stayRecords,
         today,
       );
-      expect(daysUntilMustLeave, 41);
+      expect(daysUntilMustLeave, 56);
     });
 
-    test('calculateDaysUntilMustLeave returns -1 when not in Schengen', () {
+    test('calculateDaysUntilMustLeave returns null when not in Schengen', () {
       final completedStays = [
         StayRecord(
           id: 1,
@@ -107,7 +112,37 @@ void main() {
         completedStays,
         today,
       );
-      expect(daysUntilMustLeave, -1);
+      expect(daysUntilMustLeave, isNull);
     });
+
+    test(
+      'calculateDaysUntilMustLeave includes days rolling off the beginning of the 180 day window',
+      () {
+        final completedStays = [
+          StayRecord(
+            id: 1,
+            entryDate: LocalDate(2025, 1, 1),
+            exitDate: LocalDate(2025, 1, 31),
+            // 180 days after this is July 29th.
+          ),
+          // 31 days so far.
+          // Complete the other 59 days right up to the 180 day window.
+          StayRecord(
+            id: 3,
+            entryDate: LocalDate(2025, 5, 31),
+            exitDate: null, // Ongoing stay
+            notes: 'Current stay',
+          ),
+        ];
+
+        final daysUntilMustLeave =
+            SchengenCalculator.calculateDaysUntilMustLeave(
+              completedStays,
+              LocalDate(2025, 5, 31),
+            );
+        // All the days from the first stay are rolling off immediately.
+        expect(daysUntilMustLeave, 89);
+      },
+    );
   });
 }
