@@ -20,7 +20,7 @@ class StayProvider with ChangeNotifier {
       SchengenCalculator.isCurrentlyInSchengen(_stays);
   int get daysSpent => SchengenCalculator.calculateDaysSpent(_stays);
   int get daysRemaining => SchengenCalculator.calculateDaysRemaining(_stays);
-  int get daysUntilMustLeave =>
+  int? get daysUntilMustLeave =>
       SchengenCalculator.calculateDaysUntilMustLeave(_stays);
 
   // Load all stay records from the database

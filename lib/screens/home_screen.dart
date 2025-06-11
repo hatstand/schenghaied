@@ -184,11 +184,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCountdown(int daysUntilMustLeave) {
+  Widget _buildCountdown(int? daysUntilMustLeave) {
     String message;
     Color color;
     IconData icon;
 
+    if (daysUntilMustLeave == null) {
+      return const SizedBox.shrink(); // No countdown if not applicable
+    }
     if (daysUntilMustLeave <= 0) {
       message = 'You must leave now!';
       color = Colors.red;
