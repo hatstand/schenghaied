@@ -139,16 +139,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       'Travel History',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    if (stayProvider.isCurrentlyInSchengen)
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.exit_to_app),
-                        label: const Text('Record Exit'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: () => _showExitDialog(context),
-                      ),
                   ],
                 ),
               ),
@@ -173,13 +163,32 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const AddStayScreen()),
+      floatingActionButton: Consumer<StayProvider>(
+        builder: (context, stayProvider, _) {
+          final bool isInSchengen = stayProvider.isCurrentlyInSchengen;
+
+          return FloatingActionButton(
+            onPressed: () {
+              if (isInSchengen) {
+                // Show exit dialog if already in Schengen
+                _showExitDialog(context);
+              } else {
+                // Navigate to add stay screen for entry
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AddStayScreen(),
+                  ),
+                );
+              }
+            },
+            backgroundColor: isInSchengen ? Colors.orange : Colors.green,
+            tooltip: isInSchengen ? 'Record Exit' : 'Record Entry',
+            child: Icon(
+              isInSchengen ? Icons.exit_to_app : Icons.login,
+              color: Colors.white,
+            ),
           );
         },
-        child: const Icon(Icons.add),
       ),
     );
   }
