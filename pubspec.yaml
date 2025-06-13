@@ -58,6 +58,7 @@ dependencies:
   
   # Logging
   logging: ^1.2.0
+  country_coder: ^1.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

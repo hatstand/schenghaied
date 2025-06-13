@@ -153,6 +153,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.2"
+  country_coder:
+    dependency: "direct main"
+    description:
+      name: country_coder
+      sha256: "3cd6f7ba2fb20aeecae41143559c6974a663c7fa1dd1cf020a3e9803a84e2c6c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   crypto:
     dependency: transitive
     description:
@@ -533,6 +541,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.0"
+  rbush:
+    dependency: transitive
+    description:
+      name: rbush
+      sha256: "48b683421b4afb43a642f82c6aa31911e54f3069143d31c7d33cbe329df13403"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
   shared_preferences:
     dependency: "direct main"
     description:
