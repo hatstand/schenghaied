@@ -90,6 +90,12 @@ class StayProvider with ChangeNotifier {
     }
   }
 
+  Future<void> recordEntrance(LocalDate entryDate) async {
+    if (isCurrentlyInSchengen) return;
+
+    return addStay(StayRecord(entryDate: entryDate));
+  }
+
   // Record exit from Schengen for the current stay
   Future<void> recordExit(LocalDate exitDate) async {
     if (!isCurrentlyInSchengen) return;

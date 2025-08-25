@@ -139,7 +139,26 @@ class _HomeScreenState extends State<HomeScreen> {
                       'Travel History',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                  ],
+                    stayProvider.isCurrentlyInSchengen
+                        ? ElevatedButton.icon(
+                            icon: const Icon(Icons.exit_to_app),
+                            label: const Text('Record Exit'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () => _showExitDialog(context),
+                          )
+                        : ElevatedButton.icon(
+                            icon: const Icon(Icons.exit_to_app),
+                            label: const Text('Record Entry'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () => _showEnterDialog(context),
+                          ),
+                  ]
                 ),
               ),
 
@@ -301,6 +320,63 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showEnterDialog(BuildContext context) {
+    final stayProvider = Provider.of<StayProvider>(context, listen: false);
+    DateTime selectedDateTime = DateTime.now();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Record Entrance to Schengen'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('When did you enter the Schengen zone?'),
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: selectedDateTime,
+                  firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                  lastDate: DateTime.now(),
+                );
+                if (date != null) {
+                  selectedDateTime = date;
+                }
+              },
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Entrance Date',
+                ),
+                child: Text(
+                  DateFormat('MMM dd, yyyy').format(selectedDateTime),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () {
+              // Convert DateTime to LocalDate before passing to recordExit
+              final localDate = LocalDate.dateTime(selectedDateTime);
+              stayProvider.recordEntrance(localDate);
+              Navigator.of(context).pop();
+            },
+            child: const Text('SAVE'),
+          ),
+        ],
       ),
     );
   }
