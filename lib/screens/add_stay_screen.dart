@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:schengen/providers/stay_provider.dart';
 import 'package:schengen/models/stay_record.dart';
+import 'package:schengen/models/schengen_calculator.dart';
 import 'package:intl/intl.dart';
 import 'package:time_machine/time_machine.dart';
 
@@ -38,6 +39,28 @@ class _AddStayScreenState extends State<AddStayScreen> {
 
     // If exit date is provided, user is not currently in Schengen
     _isCurrentlyInSchengen = widget.initialExitDate == null;
+  }
+
+  // Calculate how many days the user can stay if they enter on the selected date
+  int? _calculateMaxDaysForEntry() {
+    final stayProvider = Provider.of<StayProvider>(context, listen: false);
+    final existingStays = stayProvider.stays;
+
+    // Calculate days already spent in the 180-day window before this entry
+    final daysSpent = SchengenCalculator.calculateDaysSpent(
+      existingStays,
+      _entryDate.addDays(-1), // Day before entry
+    );
+
+    return 90 - daysSpent;
+  }
+
+  // Calculate the deadline date based on entry date and max days
+  LocalDate? _calculateDeadlineDate() {
+    final maxDays = _calculateMaxDaysForEntry();
+    if (maxDays == null || maxDays <= 0) return null;
+
+    return _entryDate.addDays(maxDays - 1); // -1 because the entry day counts
   }
 
   @override
@@ -78,6 +101,93 @@ class _AddStayScreenState extends State<AddStayScreen> {
                     ),
                   ),
                 ),
+              ),
+              const SizedBox(height: 24),
+
+              // Info card showing max days and deadline
+              Builder(
+                builder: (context) {
+                  final maxDays = _calculateMaxDaysForEntry();
+                  final deadlineDate = _calculateDeadlineDate();
+
+                  if (maxDays == null) return const SizedBox.shrink();
+
+                  final Color color;
+                  final IconData icon;
+
+                  if (maxDays <= 0) {
+                    color = Colors.red;
+                    icon = Icons.warning_amber_rounded;
+                  } else if (maxDays <= 14) {
+                    color = Colors.red;
+                    icon = Icons.warning_rounded;
+                  } else if (maxDays <= 30) {
+                    color = Colors.orange;
+                    icon = Icons.access_time;
+                  } else {
+                    color = Colors.green;
+                    icon = Icons.check_circle;
+                  }
+
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: color.withValues(alpha: 0.5)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(icon, color: color, size: 24),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Stay Information',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          maxDays <= 0
+                              ? 'You have reached your 90-day limit'
+                              : 'Maximum stay duration: $maxDays days',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (deadlineDate != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Must leave by: ${DateFormat('MMM dd, yyyy').format(DateTime(deadlineDate.year, deadlineDate.monthOfYear, deadlineDate.dayOfMonth))}',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                        if (maxDays <= 0) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            '⚠️ Cannot enter Schengen Zone at this time',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 24),
 

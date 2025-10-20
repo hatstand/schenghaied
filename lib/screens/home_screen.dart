@@ -214,26 +214,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCountdown(int? daysUntilMustLeave) {
     String message;
+    String dateMessage;
     Color color;
     IconData icon;
 
     if (daysUntilMustLeave == null) {
       return const SizedBox.shrink(); // No countdown if not applicable
     }
+    
+    // Calculate the actual date when user must leave
+    final today = LocalDate.today();
+    final exitDate = today.addDays(daysUntilMustLeave);
+    final formattedDate = DateFormat('MMM dd, yyyy').format(exitDate.toDateTimeUnspecified());
+    
     if (daysUntilMustLeave <= 0) {
       message = 'You must leave now!';
+      dateMessage = 'Your allowed stay has expired';
       color = Colors.red;
       icon = Icons.warning_amber_rounded;
     } else if (daysUntilMustLeave <= 7) {
       message = 'You must leave in $daysUntilMustLeave days';
+      dateMessage = 'Last day: $formattedDate';
       color = Colors.red;
       icon = Icons.warning_rounded;
     } else if (daysUntilMustLeave <= 14) {
       message = 'You must leave in $daysUntilMustLeave days';
+      dateMessage = 'Last day: $formattedDate';
       color = Colors.orange;
       icon = Icons.access_time;
     } else {
       message = 'You can stay for $daysUntilMustLeave more days';
+      dateMessage = 'Last day: $formattedDate';
       color = Colors.green;
       icon = Icons.check_circle;
     }
@@ -266,6 +277,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  dateMessage,
+                  style: TextStyle(
+                    fontSize: 14,
                     color: color,
                   ),
                 ),
