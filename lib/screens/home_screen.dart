@@ -221,12 +221,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if (daysUntilMustLeave == null) {
       return const SizedBox.shrink(); // No countdown if not applicable
     }
-    
+
     // Calculate the actual date when user must leave
     final today = LocalDate.today();
     final exitDate = today.addDays(daysUntilMustLeave);
-    final formattedDate = DateFormat('MMM dd, yyyy').format(exitDate.toDateTimeUnspecified());
-    
+    final formattedDate = DateFormat(
+      'MMM dd, yyyy',
+    ).format(exitDate.toDateTimeUnspecified());
+
     if (daysUntilMustLeave <= 0) {
       message = 'You must leave now!';
       dateMessage = 'Your allowed stay has expired';
@@ -281,13 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  dateMessage,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: color,
-                  ),
-                ),
+                Text(dateMessage, style: TextStyle(fontSize: 14, color: color)),
               ],
             ),
           ),
