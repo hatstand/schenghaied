@@ -289,7 +289,7 @@ class _AddStayScreenState extends State<AddStayScreen> {
               _entryDate.monthOfYear,
               _entryDate.dayOfMonth,
             ),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
+      lastDate: DateTime.now().add(const Duration(days: 730)), // Allow 2 years in the future
     );
 
     if (picked != null) {
