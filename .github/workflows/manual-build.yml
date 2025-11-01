@@ -73,7 +73,7 @@ jobs:
           fi
           
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: android-${{ github.event.inputs.build_type }}-build
           path: build/app/outputs/flutter-apk/
@@ -105,7 +105,7 @@ jobs:
           fi
           
       - name: Upload iOS Build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ios-${{ github.event.inputs.build_type }}-build
           path: build/ios/
