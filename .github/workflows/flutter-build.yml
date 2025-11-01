@@ -192,13 +192,13 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Download Android APK
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: release-apk
           path: release-apk
           
       - name: Download Android App Bundle
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: release-bundle
           path: release-bundle
